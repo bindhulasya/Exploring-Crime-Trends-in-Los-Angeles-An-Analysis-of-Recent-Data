@@ -1,0 +1,16 @@
+---
+title: "Proposal"
+output: html_notebook
+---
+
+# **Project**: “Exploring Crime Trends in Los Angeles: An Analysis of Recent Data”
+
+# **Introduction** 
+For this project, I will be analyzing the Los Angeles Police Department's "Crime Data from 2020 to Present" dataset (LAPD). The dataset contains information on crimes reported in Los Angeles from January 2020 to the present. The data is updated daily and is available via the Los Angeles Open Data portal. I intend to investigate patterns and trends in crime data, such as the types of crimes committed, their locations, and whether there are any significant changes in crime rates over time.
+
+# **Data Description**
+The "Crime Data from 2020 to Present" dataset includes 303,424 observations and 28 variables, which include the date and time of the incident, the type of crime, the location of the crime, and other relevant data. The data includes a wide range of crimes such as theft, assault, and vandalism. The data is relatively clean and does not require extensive data cleaning.
+
+# **Exploratory Data Analysis** 
+I intend to begin the exploratory data analysis by summarizing the overall crime rate for the city of Los Angeles by month and year. Then I will look at how crime differs by type, location, and time of day. To identify any patterns or trends in the data, I will use visualization tools such as bar plots, heat maps, and scatterplots. I will also look into whether there are any differences in crime patterns between different parts of town, such as downtown and the suburbs. Finally, I will search the data for outliers or unusual patterns and attempt to explain them. I hope to gain a better understanding of Los Angeles crime patterns and identify any factors through this analysis.
+

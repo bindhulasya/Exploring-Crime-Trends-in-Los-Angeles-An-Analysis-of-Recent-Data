@@ -1,0 +1,297 @@
+---
+title: "Exploring Crime Trends in Los Angeles: An Analysis of Recent Data"
+output: html_notebook
+---
+
+
+# **Introduction** 
+
+For this project,I will be analyzing the Los Angeles Police Department's "Crime Data from 2020 to Present" dataset(LAPD).The dataset contains information on crimes reported in Los Angeles from January 2020 to the present.The data is updated daily and is available via the Los Angeles Open Data portal.I intend to investigate patterns and trends in crime data, such as the types of crimes committed,their locations, and whether there are any significant changes in crime rates over time.
+
+# **Preparation**
+
+# Loading necessary Packages
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(tidyverse)
+library(dygraphs)
+library(leaflet)
+
+```
+
+
+# Importing Data
+
+```{r}
+# Loading and Reading data into a dataframe
+crime_data <- read_csv("C:/Users/bindh/Downloads/Crime_Data_from_2020_to_Present.csv")
+crime_data
+```
+
+# **Data Description**  
+
+The data is collected by the Los Angeles Police Department (LAPD) and is updated daily.
+
+The dataset includes information about each reported crime,such as the date and time the crime occurred, the type of crime committed,the location of the crime,and the status of the investigation.The location information includes the address,city,and zip code of the crime, as well as the latitude and longitude coordinates.
+
+The types of crimes included in the dataset range from property crimes, such as burglary and theft,to violent crimes,such as assault and homicide.The data is organized by reporting district, which is a geographical area designated by the LAPD.
+
+The purpose of this dataset is to provide transparency and accountability in law enforcement and to help researchers and policymakers understand crime patterns in the city of Los Angeles. However,it's important to note that the dataset may not include all crimes committed in the city, as some crimes may go unreported.
+
+```{r}
+summary(crime_data)
+```
+
+```{r}
+sum(is.na(crime_data))
+```
+
+```{r}
+# Exploring the structure of the data
+str(crime_data)
+```
+
+# What's going on now in los Angeles on crime issues?
+
+The city of Los Angeles is known for its vibrant culture,stunning beaches,and Hollywood glamour.Unfortunately,like any big city,Los Angeles is also prone to crime.According to data collected by the Los Angeles Police Department,the crime rate has been on a steady rise since the beginning of 2020.The city has witnessed a surge in incidents of theft,burglary,and violent crimes like murder and assault.To understand the nature of crime in the city,I analyzed the crime data from 2020 to the present using R programming language.
+
+
+
+I examined the crime data by type Using the dataset from the LA City website
+```{r}
+# crime by type
+crime_type <- crime_data %>%
+  group_by(`Crm Cd Desc`) %>%
+  summarize(total_crime = n()) %>%
+  arrange(desc(total_crime))
+crime_type
+```
+```{r}
+# Plotting crime by type
+ggplot(crime_type[1:10,], aes(x = total_crime, y = reorder(`Crm Cd Desc`, -total_crime))) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  xlab("Total Crime") + ylab("Crime Type") +
+  ggtitle("Top 10 Crimes in Los Angeles")
+
+
+```
+The top 10 crime types in Los Angeles were plotted in the graph. The highest Crime is Vehicle Stolen and also Battery Simple Assault.
+
+
+Analyzed the crime data by location
+```{r}
+# crime by location
+crime_location <- crime_data %>%
+  group_by(`Premis Desc`) %>%
+  summarize(total_crime = n()) %>%
+  arrange(desc(total_crime))
+crime_location
+
+```
+
+```{r}
+# Plotting crime by location
+ggplot(crime_location[1:10,], aes(x = total_crime, y = reorder(`Premis Desc`, -total_crime))) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  xlab("Total Crime") + ylab("Location") +
+  ggtitle("Top 10 Crime Locations in Los Angeles")
+```
+The top 10 locations with the highest number of crimes plotted in the graph. The graph shows that the most common locations for crimes in Los Angeles were streets, apartments, and parking lots.
+
+This information can be useful for law enforcement agencies to focus their efforts in high-risk areas and work towards reducing crime rates in the city.
+
+
+Analyzing the number of crimes by each day of the week
+```{r}
+# Extracting day of the week from Date Occurred column
+crime_data$DayOfWeek <- weekdays(as.Date(crime_data$`DATE OCC`))
+```
+
+
+```{r}
+# Count the number of crimes by day of the week
+crimes_by_day <- crime_data %>%
+  group_by(DayOfWeek) %>%
+  summarise(Count = n()) %>%
+  filter(!is.na(DayOfWeek))
+crimes_by_day
+```
+```{r}
+#desired order of the days of the week
+desired_order <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+# Converting the DayOfWeek column to a factor with the desired order
+crimes_by_day$DayOfWeek <- factor(crimes_by_day$DayOfWeek, levels = desired_order)
+
+# Creating the bar chart with the updated order of the days of the week
+ggplot(crimes_by_day, aes(x = DayOfWeek, y = Count, fill = DayOfWeek)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Day of the Week", y = "Number of Crimes", title = "Crimes by Day of the Week")
+```
+The resulting bar chart shows that crimes are most frequent on Tuesdays, followed by friday and Saturdays, while Mondays and Wednesdays have the lowest number of reported crimes.
+
+
+The analysis then moves on to examine the differences in crime rates across different parts of the city.
+```{r}
+# Differences between parts of town
+crime_data %>%
+  group_by(`AREA NAME`) %>%
+  summarize(total_crimes = n(),
+            avg_lat = mean(LAT, na.rm = TRUE),
+            avg_lon = mean(LON, na.rm = TRUE))%>%
+  ggplot(aes(x = avg_lon, y = avg_lat, size = total_crimes, color = `AREA NAME`)) +
+  geom_point() +
+  scale_size_continuous(range = c(1, 10)) +
+  labs(title = "Map of Reported Crimes by Area",
+       x = "Longitude",
+       y = "Latitude",
+       size = "Total Crimes",
+       color = " Area Name")
+```
+The resulting scatter plot shows that areas with higher crime rates are represented by larger dots,while the color of the dot indicates the area name.The plot reveals that certain areas such as Central and South Los Angeles have higher crime rates compared to other areas such as Pacific and West Los Angeles.Policymakers can gain a better understanding of crime hotspots and implement targeted interventions to prevent and reduce crime rates in specific areas.
+
+
+To identify any outliers or unusual patterns in the data and to summarize the status of each crime.
+```{r}
+# Looking for outliers and unusual patterns
+crime_data %>%
+  group_by(`AREA NAME`, `Crm Cd Desc`) %>%
+  summarize(total_crimes = n()) %>%
+  filter(total_crimes > 1000) %>%
+  ggplot(aes(x = `AREA NAME`, y = `Crm Cd Desc`, fill = total_crimes)) +
+  geom_tile() +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5,hjust=1))+
+  scale_fill_viridis_c() +
+  labs(title = "Heatmap of Reported Crimes by Area and Type (with Outliers)",
+       x = "Area Name",
+       y = "Crime Type",
+       fill = "Total Crimes")
+```
+This visualization helps to identify areas and crime types that have a high number of crimes, potentially indicating areas that need more attention from law enforcement agencies.
+
+
+Analyzing the total number of crimes for each status description in the crime_data dataframe.
+```{r}
+# Summarizing the status of each crime using count
+crime_status_count <- crime_data %>%
+  group_by(`Status Desc`) %>%
+  summarise(count = n())
+crime_status_count
+```
+```{r}
+# Visualizing the status of each crime using geom point
+ggplot(crime_status_count, aes(x = `Status Desc`, y = count)) +
+  geom_point(size = 3) +
+  labs(title = "Status of crimes in LA city",
+       x = "Crime Status", y = "Count")
+
+```
+we can get a summary of the status of each crime in the dataset, such as the number of crimes that were cleared, under investigation, or still open. We can use this information to get a general idea of how many crimes have been resolved and how many are still being investigated or remain unsolved.This information can be used by law enforcement agencies and policymakers to make informed decisions on crime prevention and reduction strategies.
+
+
+
+Analyzing to count the number of crimes in each month
+```{r}
+# Convert date/time column to a datetime object
+crime_data$`Date Rptd` <- lubridate::mdy_hms(crime_data$`Date Rptd`)
+```
+
+```{r}
+# Count the number of crimes by month
+crime_month_counts <- crime_data %>%
+  group_by(month = floor_date(`Date Rptd`, unit = "month")) %>%
+  summarize(count = n())
+```
+
+```{r}
+# Creating a line chart of crime trends over time
+ggplot(crime_month_counts, aes(x = month, y = count)) +
+  geom_line() +
+  ggtitle("Number of Crimes in Los Angeles by Month (2020 - Present)") +
+  xlab("Month") +
+  ylab("count")
+```
+From the line chart, we can see that crime levels have fluctuated over time, with a peak in mid-2020, followed by a steady decline in the latter part of 2020 and early 2021. However, there has been a gradual increase in the number of crimes reported since mid-2021, indicating that crime levels may be on the rise again.
+This analysis is important as it provides insights into the crime trends in Los Angeles, which can be used to inform public policy and resource allocation. By understanding the fluctuations in crime levels, policymakers can take measures to mitigate the risk of crime and ensure public safety.
+
+
+
+
+Analyzing the crimes by date and counts the number of occurrences for each date. 
+```{r}
+# Converting Date Occurred column to date format
+crime_data$`DATE OCC` <- as.Date(crime_data$`DATE OCC`, format = "%m/%d/%Y")
+```
+
+```{r}
+# Grouping crimes by date and counting the number of occurrences
+crime_count <- crime_data %>% 
+  group_by(`DATE OCC`) %>% 
+  summarize(count = n())
+crime_count
+
+```
+```{r}
+# Creating a dygraph of the crime counts over time
+dygraph(crime_count, xlab = "Date", ylab = "Number of Crimes") %>%
+  dyRangeSelector() %>%
+  dySeries("count", label = "Crimes") %>%
+  dyOptions(stackedGraph = TRUE)
+
+```
+Looking at the dygraph, we can see that crime incidents in Los Angeles have been relatively stable since the beginning of 2020. However, there was a slight increase in crime incidents during the summer months of 2020, which is not unusual as crime rates tend to increase during warmer months. There was also a spike in crime incidents during the holiday season of 2020, which is also not uncommon.
+
+Overall, the data suggests that crime incidents in Los Angeles have remained fairly stable over the past year and a half. However, it is important to note that this analysis only looks at the number of reported incidents, and does not take into account unreported crimes or changes in reporting behavior. Therefore, it is possible that the true number of crime incidents in Los Angeles may be different than what is reflected in the data.
+
+
+visual representation of the top 10 areas with the highest crime rates in Los Angeles
+```{r}
+
+# Count the number of crimes in each area and select the top 10
+top_10_areas <- crime_data %>% 
+  group_by(`AREA NAME`) %>% 
+  summarise(total_crimes = n()) %>% 
+  top_n(10, n) %>% 
+  arrange(desc(total_crimes))
+top_10_areas
+```
+```{r}
+# Create a dataframe with the place names and their longitude/latitude values
+places <- data.frame(place = c("Central", "77th Street", "Pacific", "Southwest", "Hollywood", "Southeast", "Olympic", "N Hollywood", "Newton", "Wilshire"),
+                     latitude = c(34.0537, 33.9716, 33.9519, 34.0039, 34.0928, 33.9440, 34.0522, 34.1870, 33.9897, 34.0639),
+                     longitude = c(-118.2427, -118.2731, -118.3965, -118.3080, -118.3287, -118.2468, -118.2837, -118.3813, -118.2567, -118.3602))
+places
+
+```
+```{r}
+# Create the leaflet map
+m <- leaflet(places) %>%
+  addTiles() %>%
+  setView(lng = -118.3, lat = 34, zoom = 10)
+
+# Add markers for the places
+m <- m %>%
+  addMarkers(lng = ~longitude, lat = ~latitude, popup = ~place)
+m
+
+```
+Here Markers are added to the map to show the location of each area. Clicking on a marker shows the name of the area in a popup window. The resulting map gives a visual representation of the top 10 areas with the highest crime rates in Los Angeles.
+
+Overall, this analysis provides valuable insights into the distribution of crime in Los Angeles and can help policymakers and law enforcement agencies to better understand and address crime in the city.
+
+
+# **Conclusion**
+Based on the different analyses conducted, it can be concluded that there are specific crime types, locations, days of the week, and areas in Los Angeles that have a higher frequency of reported crimes. Law enforcement agencies and policymakers can use this information to implement targeted interventions and prevention strategies to reduce crime rates in the city.
+Overall, this analysis provides valuable insights into the distribution of crime in Los Angeles and can serve as a foundation for future research and policy decisions to enhance public safety in the city.
+
+
+# **Future Scope**
+
+The further analysis for this analysis will be Demographic Analysis.
+
+Analyzing the demographic data available in the dataset could provide insights into the disparities and patterns in the involvement of different races, ethnicities, and genders in various types of crimes. By examining this information, we could potentially uncover patterns that may help address issues related to social justice and inequality.
+
+For example, we could explore whether certain races or ethnicities are overrepresented as victims or suspects in particular types of crimes. We could also investigate whether there are any gender-based disparities in the commission or victimization of certain crimes. By analyzing this data, we could potentially identify any biases or injustices in the criminal justice system and work towards addressing them.
